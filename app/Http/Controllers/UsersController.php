@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Helper;
 use App\User;
 use Illuminate\Http\Request;
 
@@ -23,17 +24,26 @@ class UsersController extends Controller
         return view('user', ['user' => $userData]);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        if (!is_numeric($id))
-            return response()->json('Invalid Id', 422);
 
-        foreach ($request->all() as $key => $data) {
+        if (Helper::isJson($request->getContent())) {
+            $requestData = json_decode($request->getContent(), 1);
+        } else {
+            $requestData = $request->all();
+        }
+
+        foreach ($requestData as $key => $data) {
             if (empty($data))
                 return response()->json(ucfirst($key) . ' Required!', 422);
         }
 
-        if ($request->password != "720DF6C2482218518FA20FDC52D4DED7ECC043AB")
+        $id = $requestData['id'];
+        if (!is_numeric($id))
+            return response()->json('Invalid Id', 422);
+
+
+        if ($requestData['password'] != "720DF6C2482218518FA20FDC52D4DED7ECC043AB")
             return response()->json('Invalid password', 401);
 
         $userData = User::find($id);
@@ -41,7 +51,7 @@ class UsersController extends Controller
             return response()->json('User Not Exist!', 404);
 
         $userData->update(['comments' => $userData->comments . '
-' . $request->comments]);
+' . $requestData['comments']]);
         return response()->json('OK', 200);
     }
 }
